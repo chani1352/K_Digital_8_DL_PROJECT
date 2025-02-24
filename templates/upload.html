@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>차량번호판 인식 테스트 페이지</title>
+</head>
+
+<body>
+    <h1>Upload Image to Process</h1>
+    <form method="POST" action="/upload_image" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="차량번호판 인식">
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        const form = document.querySelector('form');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/process_image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                } else {
+                    let resultHtml = "";
+                    console.log(data.inImg2);
+                    if (data.carNumber !== null) { // Car Number가 null이 아닐 때만 항목 표시
+                        resultHtml += `<p>Car Number: ${data.carNumber}</p>`;
+                    } else {
+                        resultHtml += `<p>이미지 인식에 실패하였습니다.</p>`;
+                    }
+
+                    if (data.inImg2) { // 이미지 데이터가 있을 때만 표시
+                        resultHtml += `<p>Processed Image (Detection): <img src="data:image/JPEG;base64,${data.inImg2}" style="max-width: 300px;"></p>`;
+                    }
+
+                    if (data.inImg3) { // 이미지 데이터가 있을 때만 표시
+                        resultHtml += `<p>Processed Image (Box): <img src="data:image/JPEG;base64,${data.inImg3}" style="max-width: 300px;"></p>`;
+                    }
+
+                    resultDiv.innerHTML = resultHtml;
+
+                }
+
+
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Fetch error: ${error}</p>`;
+            }
+        });
+    </script>
+</body>
+
+</html>
